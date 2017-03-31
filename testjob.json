@@ -1,0 +1,10 @@
+{
+  "name": "does-something",
+  "uuid": "62104AD8-70B2-58C5-BEEE-227D00CA075C",
+  "mem": 128,
+  "cpus": 1,
+  "gpus": 1,
+  "command": "touch /home/ben/does-something.txt",
+  "max_retries": 3,
+  "priority": 100
+}

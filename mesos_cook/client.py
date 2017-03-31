@@ -1,7 +1,7 @@
 import requests
-import six
 
 from .model import *
+
 
 class CookClient(object):
     __slots__ = ['base_uri', 'username', 'password']
@@ -21,9 +21,12 @@ class CookClient(object):
 
     def launch(self, jobs):
         if isinstance(jobs, list):
-            jobs_json = [job.to_json() for job in jobs]
+            for job in jobs:
+                job.check()
+            jobs_json = [to_json(job) for job in jobs]
         elif isinstance(jobs, Job):
-            jobs_json = [jobs.to_json()]
+            jobs.check()
+            jobs_json = [to_json(jobs)]
         else:
             raise TypeError("Must be a Job instance or list of Job instances: {}".format(jobs))
         r = requests.post(self._rawscheduler, auth=self._auth, json={ "jobs": jobs_json })
@@ -34,27 +37,24 @@ class CookClient(object):
         if isinstance(jobs, six.string_types):
             jobs = [jobs]
         if not isinstance(jobs, list):
-            raise TypeError('Must be a job UUID or list of job UUIDS: {}'.format(jobs))
+            raise TypeError('Must be a job UUID or list of job UUIDs: {}'.format(jobs))
 
         r = requests.get(self._rawscheduler, auth=self._auth, params={'job': jobs})
         r.raise_for_status()
-        return [JobStatus.from_json(job) for job in r.json()]
+        return [JobStatus(job) for job in r.json()]
 
     def delete(self, jobs):
-        if isinstance(jobs, list):
-            jobs_json = [job.to_json() for job in jobs]
-        elif isinstance(jobs, Job):
-            jobs_json = [jobs.to_json()]
-        else:
-            raise TypeError("Must be a Job instance or list of Job instances: {}".format(jobs))
+        if isinstance(jobs, six.string_types):
+            jobs = [jobs]
+        if not isinstance(jobs, list):
+            raise TypeError("Must be a job UUID or list of job UUIDs: {}".format(jobs))
         r = requests.delete(self._rawscheduler, auth=self._auth, params={'job': jobs})
         r.raise_for_status()
-        return r.json()
 
     def retry_job(self, job, retries):
         r = requests.post('{}/retry'.format(self.base_uri), auth=self._auth, params={'job': job, 'retries': retries})
         r.raise_for_status()
-        return r.json()
+        return r.text
 
     def list_jobs(self, user, states, start_ms=None, end_ms=None, limit=None):
         if isinstance(states, six.string_types):
@@ -73,4 +73,19 @@ class CookClient(object):
 
         r = requests.get('{}/list'.format(self.base_uri), auth=self._auth, params=params)
         r.raise_for_status()
-        return [JobStatus.from_json(job) for job in r.json()]
+        return [JobStatus(clean_status(job)) for job in r.json()]
+
+
+def clean_status(job):
+    empty = set()
+    for k, v in six.iteritems(job):
+        if v is None:
+            empty.add(k)
+    for k in empty:
+        del job[k]
+    return job
+
+
+def to_json(obj):
+    json, _ = obj.interpolate()
+    return json.get()

@@ -1,0 +1,10 @@
+{
+  "name": "testjob",
+  "uuid": "62106AD8-70B2-48C5-BEE0-207D00AA075C",
+  "mem": 128,
+  "cpus": 1,
+  "gpus": 2,
+  "command": "nvidia-smi",
+  "max_retries": 3,
+  "priority": 100
+}
