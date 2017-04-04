@@ -39,7 +39,7 @@ class Volume(Struct):
 class Container(Struct):
     type = Required(Enum('ContainerType', ('MESOS', 'DOCKER')))
     docker = DockerInfo
-    volues = List(Volume)
+    volumes = List(Volume)
 
 
 class Job(Struct):

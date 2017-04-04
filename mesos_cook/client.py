@@ -76,6 +76,31 @@ class CookClient(object):
         return [JobStatus(clean_status(job)) for job in r.json()]
 
 
+def download_sandbox_file(job, instance, path):
+    if isinstance(job, JobInstance):
+        job = job.get()
+    elif not isinstance(job, dict):
+        raise TypeError("Expected a Job or dict")
+    if isinstance(instance, JobInstance):
+        instance = instance.get()
+    elif not isinstance(instance, dict):
+        raise TypeError("Expected a JobInstance or dict")
+    base_url = "http://{hostname}:5051/files/download".format(**instance)
+    full_path = "/".join([
+        "/var/lib/mesos/slaves",
+        instance['slave_id'],
+        "frameworks",
+        job['framework_id'],
+        "executors",
+        instance['executor_id'],
+        "runs",
+        "latest"
+    ]) + "/" + path
+    print(base_url, full_path)
+    resp = requests.get(base_url, {"path": full_path})
+    resp.raise_for_status()
+    return resp.text
+
 def clean_status(job):
     empty = set()
     for k, v in six.iteritems(job):
