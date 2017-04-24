@@ -75,6 +75,7 @@ class CookClient(object):
         r.raise_for_status()
         return [JobStatus(clean_status(job)) for job in r.json()]
 
+
 def clean_status(job):
     empty = set()
     for k, v in six.iteritems(job):
@@ -85,6 +86,13 @@ def clean_status(job):
     return job
 
 
+def hyphenate(obj):
+    if isinstance(obj, dict):
+        return { key.replace('_', '-'): hyphenate(value) for key, value in six.iteritems(obj) }
+    else:
+        return obj
+
+
 def to_json(obj):
     json, _ = obj.interpolate()
-    return { key.replace('_', '-'): value for (key, value) in six.iteritems(json.get()) }
+    return hyphenate(json.get())
