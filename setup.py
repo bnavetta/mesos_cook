@@ -21,7 +21,7 @@ setup(
     author_email='benjamin_navetta@brown.edu',
     license='MIT',
     packages=['mesos_cook'],
-    install_requires=['requests>=2.13.0', 'six>=1.10.0', 'docopt>=0.6.2', 'pystachio>=0.8.3', 'terminaltables>=3.1.0'],
+    install_requires=['requests>=2.13.0', 'six>=1.10.0', 'docopt>=0.6.2', 'pystachio>=0.8.3', 'Cerberus>=1.1', 'terminaltables>=3.1.0'],
     entry_points={
         'console_scripts': ['cook=mesos_cook.cli:main']
     },

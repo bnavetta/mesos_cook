@@ -8,6 +8,7 @@ from terminaltables import AsciiTable
 from requests import HTTPError
 from .client import CookClient, download_sandbox_file
 from .model import *
+from .logs import FileFetcher
 from . import __version__
 
 
@@ -25,6 +26,7 @@ Usage:
     cook [options] delete <job-uuid>...
     cook [options] retry <job-uuid> <retries>
     cook [options] list <user> <states> [<limit> <start_ms> <end_ms>]
+    cook [options] logs <job-uuid> (--stdout | --stderr)
     cook (-h | --help)
 
 Options:
@@ -40,6 +42,7 @@ Commands:
     retry   Retry a job some number of times
     list    List jobs matching the given conditions
             <states> can be any of 'waiting', 'running', or 'completed', joined with a '+'
+    logs    Display stdout or stderr for a job
 
 Job Descriptions:
     Job descriptions are JSON objects of the following form (see mesos_cook.models.Job) for more information
@@ -125,6 +128,8 @@ class CookCli(object):
             self.retry()
         elif args['list']:
             self.list()
+        elif args['logs']:
+            self.logs()
 
     def run(self):
         if self._args['-']: # Read from stdin
@@ -180,6 +185,21 @@ class CookCli(object):
             print_jobs(jobs)
         except HTTPError as e:
             print("ERROR: {}".format(e.response.text))
+
+    def logs(self):
+        job_id = self._args['<job-uuid>']
+        if self._args['--stdout']:
+            path = 'stdout'
+        elif self._args['--stderr']:
+            path = 'stderr'
+        try:
+            fetcher = FileFetcher(self._client.username, self._client.password)
+            job = self._client.status(job_id)[0].get()
+            for instance in job.get('instances', []):
+                print('\nInstance  {}:\n'.format(instance['task_id']))
+                print(fetcher.get(instance, path))
+        except HTTPError as e:
+            print("ERROR: {} {}".format(e.response.status_code, e.response.text))
 
 
 def print_jobs(jobs):
